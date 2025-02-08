@@ -4,8 +4,20 @@ class Person {
 
   Person(this.name, this.personalNumber);
 
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'personalNumber': personalNumber,
+      };
+
+      factory Person.fromJson(Map<String, dynamic> json) {
+    return Person(
+      json['name'],
+      json['personalNumber'],
+    );
+  }
+
   @override
-  String toString() => 'Person(name: $name, personalNumber: $personalNumber)';
+  String toString() => '\nNamn: $name \nPersonnummer: $personalNumber';
 }
 
 class Vehicle {
@@ -14,9 +26,23 @@ class Vehicle {
   Person owner;
 
   Vehicle(this.registrationNumber, this.vehicleType, this.owner);
+
+  Map<String, dynamic> toJson() => {
+        'registrationNumber': registrationNumber,
+        'vehicleType': vehicleType,
+        'owner': owner.toJson(),
+      };
+
+      factory Vehicle.fromJson(Map<String, dynamic> json) {
+    return Vehicle(
+      json['registrationNumber'],
+      json['vehicleType'],
+      Person.fromJson(json['owner']),
+    );
+  }
   
   @override
-  String toString() => 'Vehicle(registrationNumber: $registrationNumber, vehicleType: $vehicleType, owner: $owner)';
+  String toString() => '\nRegnr: $registrationNumber, \nFordonstyp: $vehicleType, \nÄgare: $owner)';
 }
 
 class ParkingSpace{
@@ -26,8 +52,22 @@ class ParkingSpace{
 
   ParkingSpace(this.id, this.address, this.pph);
 
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'address': address,
+        'pph': pph,
+      };
+
+      factory ParkingSpace.fromJson(Map<String, dynamic> json) {
+    return ParkingSpace(
+      json['id'],
+      json['address'],
+      json['pph'],
+    );
+  }
+
    @override
-  String toString() => 'ParkingSpace(id: $id, address: $address, pph: $pph)';
+  String toString() => '\nParkeringens id: $id, \nAdress: $address, \nPris: $pph kr per timme)';
 }
 
 class ParkingSession{
@@ -38,8 +78,24 @@ class ParkingSession{
 
   ParkingSession(this.vehicle, this.parkingSpace, this.startTime, [this.endTime]);
 
+  Map<String, dynamic> toJson() => {
+        'vehicle': vehicle.toJson(),
+        'parkingSpace': parkingSpace.toJson(),
+        'startTime': startTime.toIso8601String(),
+        'endTime': endTime?.toIso8601String(),
+      };
+
+      factory ParkingSession.fromJson(Map<String, dynamic> json) {
+    return ParkingSession(
+      Vehicle.fromJson(json['vehicle']),
+      ParkingSpace.fromJson(json['parkingSpace']),
+      DateTime.parse(json['startTime']),
+      json['endTime'] != null ? DateTime.parse(json['endTime']) : null,
+    );
+  }
+
   @override
   String toString(){
-    return 'ParkingSession(vehicle: ${vehicle.registrationNumber}, parkingSpace: ${parkingSpace.id}, startTime: $startTime, endTime: ${endTime ?? "ongoing"})';
+    return '\nRegnr: ${vehicle.registrationNumber}, \nParkeringens id: ${parkingSpace.id}, \nParkeringen startad: $startTime, \nParkeringen avslutad: ${endTime ?? "ongoing"})';
   }
 }
