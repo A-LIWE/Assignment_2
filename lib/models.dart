@@ -11,7 +11,7 @@ class Person {
 class Vehicle {
   String registrationNumber;
   String vehicleType;
-  String owner;
+  Person owner;
 
   Vehicle(this.registrationNumber, this.vehicleType, this.owner);
   
@@ -36,7 +36,7 @@ class ParkingSession{
   DateTime startTime;
   DateTime? endTime;
 
-  ParkingSession(this.vehicle, this.parkingSpace, this.startTime, this.endTime);
+  ParkingSession(this.vehicle, this.parkingSpace, this.startTime, [this.endTime]);
 
   @override
   String toString(){

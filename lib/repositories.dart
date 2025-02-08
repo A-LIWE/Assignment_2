@@ -7,7 +7,7 @@ class PersonRepository {
 
   List<Person> getAll() => _people;
 
- Person? getById(String personalNumber) {
+ Person? getPersonById(String personalNumber) {
   try {
     return _people.firstWhere((p) => p.personalNumber == personalNumber);
   } catch (e) {
@@ -27,7 +27,7 @@ class VehicleRepository {
 
   void add (Vehicle vehicle) => _vehicles.add(vehicle);
   List <Vehicle> getAll() => _vehicles;
-  Vehicle? getById(String registrationNumber) {
+  Vehicle? getVehicleById(String registrationNumber) {
   try {
     return _vehicles.firstWhere((v) => v.registrationNumber == registrationNumber);
   } catch (e) {
@@ -47,7 +47,7 @@ class ParkingSpaceRepository {
 
   void add(ParkingSpace space) => _spaces.add(space);
   List<ParkingSpace> getAll() => _spaces;
-  ParkingSpace? getById(String id) {
+  ParkingSpace? getSpaceById(String id) {
   try {
     return _spaces.firstWhere((s) => s.id == id);
   } catch (e) {
