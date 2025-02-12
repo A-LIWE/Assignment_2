@@ -28,7 +28,8 @@ void startCLI() {
         handleParkingSpaces(parkingSpaceRepo);
         break;
       case '4':
-        handleParkingSessions(parkingSessionRepo, vehicleRepo, parkingSpaceRepo);
+        handleParkingSessions(
+            parkingSessionRepo, vehicleRepo, parkingSpaceRepo);
         break;
       case '5':
         print('Avslutar programmet...');
@@ -55,13 +56,21 @@ void handlePersons(PersonRepository personRepo) {
         var name = stdin.readLineSync()!;
         print('Ange personnummer:');
         var personalNumber = stdin.readLineSync()!;
-        personRepo.add(Person(name, personalNumber));
-        print('Person tillagd.');
+        var person = Person(name, personalNumber);
+
+        if (person.isValid()) {
+          personRepo.add(Person(name, personalNumber));
+          print('Person tillagd.');
+        } else {
+          print('❌: Namn eller personnummer är felaktigt.');
+        }
         break;
+
       case '2':
         print('Alla personer:');
         personRepo.getAll().forEach((p) => print(p));
         break;
+
       case '3':
         print('Ange personnummer för personen som ska uppdateras:');
         var personalNumber = stdin.readLineSync()!;
@@ -75,12 +84,14 @@ void handlePersons(PersonRepository personRepo) {
           print('Person hittades inte.');
         }
         break;
+
       case '4':
         print('Ange personnummer för personen som ska tas bort:');
         var personalNumber = stdin.readLineSync()!;
         personRepo.delete(personalNumber);
         print('Person borttagen.');
         break;
+
       case '5':
         return;
       default:
@@ -89,7 +100,8 @@ void handlePersons(PersonRepository personRepo) {
   }
 }
 
-void handleVehicles(VehicleRepository vehicleRepo, PersonRepository personRepo) {
+void handleVehicles(
+    VehicleRepository vehicleRepo, PersonRepository personRepo) {
   while (true) {
     print('\nHantera fordon:');
     print('1. Skapa ett nytt fordon');
@@ -102,26 +114,36 @@ void handleVehicles(VehicleRepository vehicleRepo, PersonRepository personRepo) 
     switch (choice) {
       case '1':
         print('Ange registreringsnummer:');
-        var regNum = stdin.readLineSync()!;
+        var regNum = stdin.readLineSync()!.toUpperCase();
         print('Ange fordonstyp:');
-        var type = stdin.readLineSync()!;
+        var type = stdin.readLineSync()!.toUpperCase();
         print('Ange ägarens personnummer:');
         var ownerId = stdin.readLineSync()!;
         var owner = personRepo.getPersonById(ownerId);
-        if (owner != null) {
+
+        if (owner == null) {
+          print('❌ Fel: Ägare hittades inte.');
+          break;
+        }
+
+        var vehicle = Vehicle(regNum, type, owner);
+        if (vehicle.isValid()) {
           vehicleRepo.add(Vehicle(regNum, type, owner));
           print('Fordon tillagt.');
         } else {
-          print('Ägare hittades inte.');
+          print(
+              '❌: Ogiltiga uppgifter, kontrollera registreringsnummer och fordonstyp.');
         }
         break;
+
       case '2':
         print('Alla fordon:');
         vehicleRepo.getAll().forEach((v) => print(v));
         break;
+
       case '3':
         print('Ange registreringsnummer för fordonet som ska uppdateras:');
-        var regNum = stdin.readLineSync()!;
+        var regNum = stdin.readLineSync()!.toUpperCase();
         var vehicle = vehicleRepo.getVehicleById(regNum);
         if (vehicle != null) {
           print('Ange ny fordonstyp:');
@@ -132,12 +154,14 @@ void handleVehicles(VehicleRepository vehicleRepo, PersonRepository personRepo) 
           print('Fordon hittades inte.');
         }
         break;
+
       case '4':
         print('Ange registreringsnummer för fordonet som ska tas bort:');
         var regNum = stdin.readLineSync()!;
         vehicleRepo.delete(regNum);
         print('Fordon borttaget.');
         break;
+
       case '5':
         return;
       default:
@@ -164,13 +188,22 @@ void handleParkingSpaces(ParkingSpaceRepository parkingSpaceRepo) {
         var address = stdin.readLineSync()!;
         print('Ange pris per timme:');
         var pricePerHour = double.parse(stdin.readLineSync()!);
-        parkingSpaceRepo.add(ParkingSpace(id, address, pricePerHour));
-        print('Parkeringsplats tillagd.');
+        var parkingSpace = ParkingSpace(id, address, pricePerHour);
+
+        if (parkingSpace.isValid()) {
+          parkingSpaceRepo.add(ParkingSpace(id, address, pricePerHour));
+          print('Parkeringsplats tillagd.');
+        } else {
+          print(
+              '❌: Ogiltiga uppgifter, kontrollera parkerings-id, adress och pris');
+        }
         break;
+
       case '2':
         print('Alla parkeringsplatser:');
         parkingSpaceRepo.getAll().forEach((s) => print(s));
         break;
+
       case '3':
         print('Ange ID för parkeringsplatsen som ska uppdateras:');
         var id = stdin.readLineSync()!;
@@ -186,12 +219,14 @@ void handleParkingSpaces(ParkingSpaceRepository parkingSpaceRepo) {
           print('Parkeringsplats hittades inte.');
         }
         break;
+
       case '4':
         print('Ange ID för parkeringsplatsen som ska tas bort:');
         var id = stdin.readLineSync()!;
         parkingSpaceRepo.delete(id);
         print('Parkeringsplats borttagen.');
         break;
+
       case '5':
         return;
       default:
@@ -200,7 +235,8 @@ void handleParkingSpaces(ParkingSpaceRepository parkingSpaceRepo) {
   }
 }
 
-void handleParkingSessions(ParkingSessionRepository parkingSessionRepo, VehicleRepository vehicleRepo, ParkingSpaceRepository parkingSpaceRepo) {
+void handleParkingSessions(ParkingSessionRepository parkingSessionRepo,
+    VehicleRepository vehicleRepo, ParkingSpaceRepository parkingSpaceRepo) {
   while (true) {
     print('\nHantera parkeringar:');
     print('1. Skapa en ny parkering');
@@ -213,7 +249,7 @@ void handleParkingSessions(ParkingSessionRepository parkingSessionRepo, VehicleR
     switch (choice) {
       case '1':
         print('Ange registreringsnummer för fordonet:');
-        var regNum = stdin.readLineSync()!;
+        var regNum = stdin.readLineSync()!.toUpperCase();
         var vehicle = vehicleRepo.getVehicleById(regNum);
         if (vehicle == null) {
           print('Fordon hittades inte.');
@@ -226,16 +262,24 @@ void handleParkingSessions(ParkingSessionRepository parkingSessionRepo, VehicleR
           print('Parkeringsplats hittades inte.');
           break;
         }
-        parkingSessionRepo.add(ParkingSession(vehicle, space, DateTime.now()));
-        print('Parkering startad.');
+        var session = ParkingSession(vehicle, space, DateTime.now());
+        if (session.isValid()) {
+          parkingSessionRepo
+              .add(ParkingSession(vehicle, space, DateTime.now()));
+          print('Parkering startad.');
+        } else {
+          print('❌: Ogiltiga parkeringsuppgifter.');
+        }
         break;
+
       case '2':
         print('Alla parkeringar:');
         parkingSessionRepo.getAll().forEach((p) => print(p));
         break;
+
       case '3':
         print('Ange registreringsnummer för fordonet som ska uppdateras:');
-        var regNum = stdin.readLineSync()!;
+        var regNum = stdin.readLineSync()!.toUpperCase();
         print('Vill du avsluta parkeringen? (j/n)');
         var endParking = stdin.readLineSync()!.toLowerCase() == 'j';
         if (endParking) {
@@ -254,8 +298,10 @@ void handleParkingSessions(ParkingSessionRepository parkingSessionRepo, VehicleR
           }
         }
         break;
+
       case '4':
-        print('Ange registreringsnummer för fordonet vars parkering ska tas bort:');
+        print(
+            'Ange registreringsnummer för fordonet vars parkering ska tas bort:');
         var regNum = stdin.readLineSync()!;
         if (parkingSessionRepo.delete(regNum)) {
           print('Parkering borttagen.');
@@ -263,6 +309,7 @@ void handleParkingSessions(ParkingSessionRepository parkingSessionRepo, VehicleR
           print('Ingen parkering hittades.');
         }
         break;
+
       case '5':
         return;
       default:
@@ -270,4 +317,3 @@ void handleParkingSessions(ParkingSessionRepository parkingSessionRepo, VehicleR
     }
   }
 }
-

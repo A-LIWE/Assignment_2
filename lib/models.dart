@@ -18,6 +18,19 @@ class Person {
 
   @override
   String toString() => '\nNamn: $name \nPersonnummer: $personalNumber';
+
+  bool isValid() {
+    return _isValidName() && _isValidPersonalNumber();
+  }
+
+  bool _isValidName() {
+    return name.isNotEmpty;
+  }
+
+  bool _isValidPersonalNumber() {
+    final regex = RegExp(r'^\d{6,8}-?\d{4}$');
+    return regex.hasMatch(personalNumber);
+  }
 }
 
 class Vehicle {
@@ -42,7 +55,20 @@ class Vehicle {
   }
   
   @override
-  String toString() => '\nRegnr: $registrationNumber, \nFordonstyp: $vehicleType, \nÄgare: $owner)';
+  String toString() => '\nRegnr: $registrationNumber, \nFordonstyp: $vehicleType, \nÄgare: $owner';
+
+  bool isValid() {
+    return _isValidRegistrationNumber() && _isValidVehicleType() && owner.isValid();
+  }
+
+  bool _isValidRegistrationNumber() {
+    final regex = RegExp(r'^[A-Z]{3}\d{2}[A-Z0-9]$');
+    return regex.hasMatch(registrationNumber);
+  }
+
+  bool _isValidVehicleType() {
+    return vehicleType.isNotEmpty;
+  }
 }
 
 class ParkingSpace{
@@ -67,7 +93,24 @@ class ParkingSpace{
   }
 
    @override
-  String toString() => '\nParkeringens id: $id, \nAdress: $address, \nPris: $pph kr per timme)';
+  String toString() => '\nParkeringens id: $id, \nAdress: $address, \nPris: $pph kr per timme';
+
+  bool isValid() {
+    return _isValidId() && _isValidAddress() && _isValidPrice();
+  }
+
+  bool _isValidId() {
+    final regex = RegExp(r'^[A-Za-z0-9]{3,}$');
+    return regex.hasMatch(id);
+  }
+
+  bool _isValidAddress() {
+    return address.isNotEmpty;
+  }
+
+  bool _isValidPrice() {
+    return pph > 0;
+  }
 }
 
 class ParkingSession{
@@ -96,6 +139,22 @@ class ParkingSession{
 
   @override
   String toString(){
-    return '\nRegnr: ${vehicle.registrationNumber}, \nParkeringens id: ${parkingSpace.id}, \nParkeringen startad: $startTime, \nParkeringen avslutad: ${endTime ?? "ongoing"})';
+    return '\nRegnr: ${vehicle.registrationNumber}, \nParkeringens id: ${parkingSpace.id} \nParkeringen startad: $startTime \nParkeringen avslutad: ${endTime ?? "ongoing"}';
+  }
+
+  bool isValid() {
+    return vehicle.isValid() &&
+           parkingSpace.isValid() &&
+           _isValidStartTime() &&
+           _isValidEndTime();
+  }
+
+  bool _isValidStartTime() {
+    return startTime.isBefore(DateTime.now());
+  }
+
+  bool _isValidEndTime() {
+    if (endTime == null) return true;
+    return endTime!.isAfter(startTime);
   }
 }
