@@ -1,8 +1,11 @@
+import 'package:uuid/uuid.dart';
+
 class Person {
+  String uuid;
   String name;
   String personalNumber;
 
-  Person(this.name, this.personalNumber);
+  Person(this.name, this.personalNumber) : uuid = Uuid().v4();
 
   Map<String, dynamic> toJson() => {
         'name': name,
@@ -34,11 +37,12 @@ class Person {
 }
 
 class Vehicle {
+  String uuid;
   String registrationNumber;
   String vehicleType;
   Person owner;
 
-  Vehicle(this.registrationNumber, this.vehicleType, this.owner);
+  Vehicle(this.registrationNumber, this.vehicleType, this.owner) : uuid = Uuid().v4();
 
   Map<String, dynamic> toJson() => {
         'registrationNumber': registrationNumber,
@@ -72,11 +76,12 @@ class Vehicle {
 }
 
 class ParkingSpace{
+  String uuid;
   String id;
   String address;
   double pph;
 
-  ParkingSpace(this.id, this.address, this.pph);
+  ParkingSpace(this.id, this.address, this.pph) : uuid = Uuid().v4();
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -114,12 +119,13 @@ class ParkingSpace{
 }
 
 class ParkingSession{
+  String uuid;
   Vehicle vehicle;
   ParkingSpace parkingSpace;
   DateTime startTime;
   DateTime? endTime;
 
-  ParkingSession(this.vehicle, this.parkingSpace, this.startTime, [this.endTime]);
+  ParkingSession(this.vehicle, this.parkingSpace, this.startTime, [this.endTime]) : uuid = Uuid().v4();
 
   Map<String, dynamic> toJson() => {
         'vehicle': vehicle.toJson(),
