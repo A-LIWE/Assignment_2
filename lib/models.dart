@@ -59,7 +59,7 @@ class Vehicle {
   }
   
   @override
-  String toString() => '\nRegnr: $registrationNumber, \nFordonstyp: $vehicleType, \nÄgare: $owner';
+  String toString() => '\nRegnr: $registrationNumber \nFordonstyp: $vehicleType \nÄgare: $owner';
 
   bool isValid() {
     return _isValidRegistrationNumber() && _isValidVehicleType() && owner.isValid();

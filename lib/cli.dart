@@ -2,7 +2,7 @@ import 'repositories.dart';
 import 'models.dart';
 import 'dart:io';
 
-void startCLI() {
+Future <void> startCLI() async {
   var personRepo = PersonRepository();
   var vehicleRepo = VehicleRepository();
   var parkingSpaceRepo = ParkingSpaceRepository();
@@ -19,10 +19,10 @@ void startCLI() {
 
     switch (choice) {
       case '1':
-        handlePersons(personRepo);
+       await handlePersons(personRepo);
         break;
       case '2':
-        handleVehicles(vehicleRepo, personRepo);
+       await handleVehicles(vehicleRepo, personRepo);
         break;
       case '3':
         handleParkingSpaces(parkingSpaceRepo);
@@ -40,7 +40,7 @@ void startCLI() {
   }
 }
 
-void handlePersons(PersonRepository personRepo) {
+Future<void> handlePersons(PersonRepository personRepo) async {
   while (true) {
     print('\nHantera personer:');
     print('1. Skapa en ny person');
@@ -67,8 +67,17 @@ void handlePersons(PersonRepository personRepo) {
         break;
 
       case '2':
-        print('Alla personer:');
-        personRepo.getAll().forEach((p) => print(p));
+        print('Laddar personer...');
+        var people = await personRepo.getAll();
+        if (people.isEmpty) {
+          print('❌ Ingen person hittades.');
+        } else {
+          print('Alla personer:');
+          for (var person in people) {
+            print(person);
+          }
+        }
+
         break;
 
       case '3':
@@ -100,8 +109,8 @@ void handlePersons(PersonRepository personRepo) {
   }
 }
 
-void handleVehicles(
-    VehicleRepository vehicleRepo, PersonRepository personRepo) {
+Future <void> handleVehicles(
+    VehicleRepository vehicleRepo, PersonRepository personRepo) async {
   while (true) {
     print('\nHantera fordon:');
     print('1. Skapa ett nytt fordon');
@@ -137,8 +146,16 @@ void handleVehicles(
         break;
 
       case '2':
-        print('Alla fordon:');
-        vehicleRepo.getAll().forEach((v) => print(v));
+        print('Laddar fordon...');
+        var vehicles = await vehicleRepo.getAll();
+        if (vehicles.isEmpty) {
+          print('❌ Inga fordon hittades.');
+        } else {
+          print('Alla fordon:');
+          for (var vehicle in vehicles) {
+            print(vehicle);
+          }
+        }
         break;
 
       case '3':
@@ -147,7 +164,7 @@ void handleVehicles(
         var vehicle = vehicleRepo.getVehicleById(regNum);
         if (vehicle != null) {
           print('Ange ny fordonstyp:');
-          var newType = stdin.readLineSync()!;
+          var newType = stdin.readLineSync()!.toUpperCase();
           vehicleRepo.update(Vehicle(regNum, newType, vehicle.owner));
           print('Fordon uppdaterat.');
         } else {
@@ -157,7 +174,7 @@ void handleVehicles(
 
       case '4':
         print('Ange registreringsnummer för fordonet som ska tas bort:');
-        var regNum = stdin.readLineSync()!;
+        var regNum = stdin.readLineSync()!.toUpperCase();
         vehicleRepo.delete(regNum);
         print('Fordon borttaget.');
         break;
@@ -183,7 +200,7 @@ void handleParkingSpaces(ParkingSpaceRepository parkingSpaceRepo) {
     switch (choice) {
       case '1':
         print('Ange ID:');
-        var id = stdin.readLineSync()!;
+        var id = stdin.readLineSync()!.toUpperCase();
         print('Ange adress:');
         var address = stdin.readLineSync()!;
         print('Ange pris per timme:');
@@ -206,7 +223,7 @@ void handleParkingSpaces(ParkingSpaceRepository parkingSpaceRepo) {
 
       case '3':
         print('Ange ID för parkeringsplatsen som ska uppdateras:');
-        var id = stdin.readLineSync()!;
+        var id = stdin.readLineSync()!.toUpperCase();
         var space = parkingSpaceRepo.getSpaceById(id);
         if (space != null) {
           print('Ange ny adress:');
@@ -222,7 +239,7 @@ void handleParkingSpaces(ParkingSpaceRepository parkingSpaceRepo) {
 
       case '4':
         print('Ange ID för parkeringsplatsen som ska tas bort:');
-        var id = stdin.readLineSync()!;
+        var id = stdin.readLineSync()!.toUpperCase();
         parkingSpaceRepo.delete(id);
         print('Parkeringsplats borttagen.');
         break;
@@ -256,7 +273,7 @@ void handleParkingSessions(ParkingSessionRepository parkingSessionRepo,
           break;
         }
         print('Ange ID för parkeringsplatsen:');
-        var spaceId = stdin.readLineSync()!;
+        var spaceId = stdin.readLineSync()!.toUpperCase();
         var space = parkingSpaceRepo.getSpaceById(spaceId);
         if (space == null) {
           print('Parkeringsplats hittades inte.');
@@ -302,7 +319,7 @@ void handleParkingSessions(ParkingSessionRepository parkingSessionRepo,
       case '4':
         print(
             'Ange registreringsnummer för fordonet vars parkering ska tas bort:');
-        var regNum = stdin.readLineSync()!;
+        var regNum = stdin.readLineSync()!.toUpperCase();
         if (parkingSessionRepo.delete(regNum)) {
           print('Parkering borttagen.');
         } else {
