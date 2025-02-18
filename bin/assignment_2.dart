@@ -1,4 +1,4 @@
-import 'package:assignment_1/cli.dart';
+import 'package:assignment_2/cli.dart';
 
 void main() {
   print('Välkommen till Parkeringssystemet!');
