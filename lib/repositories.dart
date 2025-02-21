@@ -1,31 +1,63 @@
 import 'models.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class PersonRepository {
-  final List<Person> _people = [];
+  final String baseUrl = 'http://localhost:3000/api/persons';
 
-  void add(Person person) => _people.add(person);
-
-  Future<List<Person>> getAll() async {
-    await Future.delayed(Duration(seconds: 1));
-    return _people;
-  }
-
-  Person? getPersonById(String personalNumber) {
-    try {
-      return _people.firstWhere((p) => p.personalNumber == personalNumber);
-    } catch (e) {
-      return null;
+  Future<void> add(Person person) async {
+    final response = await http.post(
+      Uri.parse(baseUrl),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(person.toJson()),
+    );
+    if (response.statusCode != 201) {
+      throw Exception('Misslyckades att lägga till person');
     }
   }
 
-  void update(Person updatedPerson) {
-    int index = _people
-        .indexWhere((p) => p.personalNumber == updatedPerson.personalNumber);
-    if (index != -1) _people[index] = updatedPerson;
+  Future<List<Person>> getAll() async {
+    final response = await http.get(Uri.parse(baseUrl));
+
+    print('DEBUG: Response status code: ${response.statusCode}');
+  print('DEBUG: Response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      List<dynamic> data = jsonDecode(response.body);
+
+      print('DEBUG: Parsed data: $data'); // Se vad som faktiskt parsas
+      
+      return data.map((e) => Person.fromJson(e)).toList();
+    } else {
+      throw Exception('Misslyckades att hämta personer');
+    }
   }
 
-  void delete(String personalNumber) =>
-      _people.removeWhere((p) => p.personalNumber == personalNumber);
+  Future<Person?> getPersonById(String personalNumber) async {
+    final response = await http.get(Uri.parse('$baseUrl/$personalNumber'));
+    if (response.statusCode == 200) {
+      return Person.fromJson(jsonDecode(response.body));
+    }
+    return null;
+  }
+
+  Future<void> update(Person person) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/${person.personalNumber}'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(person.toJson()),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Misslyckades att uppdatera person');
+    }
+  }
+
+  Future<void> delete(String personalNumber) async {
+    final response = await http.delete(Uri.parse('$baseUrl/$personalNumber'));
+    if (response.statusCode != 200) {
+      throw Exception('Misslyckades att radera person');
+    }
+  }
 }
 
 class VehicleRepository {

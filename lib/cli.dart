@@ -2,7 +2,7 @@ import 'repositories.dart';
 import 'models.dart';
 import 'dart:io';
 
-Future <void> startCLI() async {
+Future<void> startCLI() async {
   var personRepo = PersonRepository();
   var vehicleRepo = VehicleRepository();
   var parkingSpaceRepo = ParkingSpaceRepository();
@@ -19,16 +19,16 @@ Future <void> startCLI() async {
 
     switch (choice) {
       case '1':
-       await handlePersons(personRepo);
+        await handlePersons(personRepo);
         break;
       case '2':
-       await handleVehicles(vehicleRepo, personRepo);
+        await handleVehicles(vehicleRepo, personRepo);
         break;
       case '3':
-        handleParkingSpaces(parkingSpaceRepo);
+        await handleParkingSpaces(parkingSpaceRepo);
         break;
       case '4':
-        handleParkingSessions(
+        await handleParkingSessions(
             parkingSessionRepo, vehicleRepo, parkingSpaceRepo);
         break;
       case '5':
@@ -59,7 +59,7 @@ Future<void> handlePersons(PersonRepository personRepo) async {
         var person = Person(name, personalNumber);
 
         if (person.isValid()) {
-          personRepo.add(Person(name, personalNumber));
+          await personRepo.add(person);
           print('Person tillagd.');
         } else {
           print('❌: Namn eller personnummer är felaktigt.');
@@ -77,17 +77,17 @@ Future<void> handlePersons(PersonRepository personRepo) async {
             print(person);
           }
         }
-
+        stdin.readLineSync();
         break;
 
       case '3':
         print('Ange personnummer för personen som ska uppdateras:');
         var personalNumber = stdin.readLineSync()!;
-        var person = personRepo.getPersonById(personalNumber);
+        var person = await personRepo.getPersonById(personalNumber);
         if (person != null) {
           print('Ange nytt namn:');
           var newName = stdin.readLineSync()!;
-          personRepo.update(Person(newName, personalNumber));
+          await personRepo.update(Person(newName, personalNumber));
           print('Person uppdaterad.');
         } else {
           print('Person hittades inte.');
@@ -97,7 +97,7 @@ Future<void> handlePersons(PersonRepository personRepo) async {
       case '4':
         print('Ange personnummer för personen som ska tas bort:');
         var personalNumber = stdin.readLineSync()!;
-        personRepo.delete(personalNumber);
+        await personRepo.delete(personalNumber);
         print('Person borttagen.');
         break;
 
@@ -109,7 +109,7 @@ Future<void> handlePersons(PersonRepository personRepo) async {
   }
 }
 
-Future <void> handleVehicles(
+Future<void> handleVehicles(
     VehicleRepository vehicleRepo, PersonRepository personRepo) async {
   while (true) {
     print('\nHantera fordon:');
@@ -128,7 +128,7 @@ Future <void> handleVehicles(
         var type = stdin.readLineSync()!.toUpperCase();
         print('Ange ägarens personnummer:');
         var ownerId = stdin.readLineSync()!;
-        var owner = personRepo.getPersonById(ownerId);
+        var owner = await personRepo.getPersonById(ownerId);
 
         if (owner == null) {
           print('❌ Fel: Ägare hittades inte.');
@@ -137,7 +137,7 @@ Future <void> handleVehicles(
 
         var vehicle = Vehicle(regNum, type, owner);
         if (vehicle.isValid()) {
-          vehicleRepo.add(Vehicle(regNum, type, owner));
+          vehicleRepo.add(vehicle);
           print('Fordon tillagt.');
         } else {
           print(
@@ -156,6 +156,7 @@ Future <void> handleVehicles(
             print(vehicle);
           }
         }
+        stdin.readLineSync();
         break;
 
       case '3':
@@ -187,7 +188,8 @@ Future <void> handleVehicles(
   }
 }
 
-void handleParkingSpaces(ParkingSpaceRepository parkingSpaceRepo) {
+Future<void> handleParkingSpaces(
+    ParkingSpaceRepository parkingSpaceRepo) async {
   while (true) {
     print('\nHantera parkeringsplatser:');
     print('1. Skapa en ny parkeringsplats');
@@ -252,8 +254,10 @@ void handleParkingSpaces(ParkingSpaceRepository parkingSpaceRepo) {
   }
 }
 
-void handleParkingSessions(ParkingSessionRepository parkingSessionRepo,
-    VehicleRepository vehicleRepo, ParkingSpaceRepository parkingSpaceRepo) {
+Future<void> handleParkingSessions(
+    ParkingSessionRepository parkingSessionRepo,
+    VehicleRepository vehicleRepo,
+    ParkingSpaceRepository parkingSpaceRepo) async {
   while (true) {
     print('\nHantera parkeringar:');
     print('1. Skapa en ny parkering');
