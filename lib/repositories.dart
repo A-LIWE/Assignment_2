@@ -6,27 +6,41 @@ class PersonRepository {
   final String baseUrl = 'http://localhost:3000/api/persons';
 
   Future<void> add(Person person) async {
-    final response = await http.post(
-      Uri.parse(baseUrl),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(person.toJson()),
-    );
-    if (response.statusCode != 201) {
-      throw Exception('Misslyckades att lägga till person');
+    final Uri url = Uri.parse(baseUrl);
+    final String body = jsonEncode(person.toJson());
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: body,
+      );
+
+      if (response.statusCode == 201) {
+        print('✅ Personen ${person.name} har lagts till.');
+      } else if (response.statusCode == 409) {
+        throw Exception(
+            '❌ Personen med personnummer ${person.personalNumber} finns redan i systemet.');
+      } else if (response.statusCode == 400) {
+        throw Exception(
+            '❌ Ogiltiga data skickades. Kontrollera att alla fält är korrekt ifyllda.');
+      } else if (response.statusCode == 500) {
+        throw Exception('❌ Serverfel, försök igen senare.');
+      } else {
+        throw Exception(
+            '❌ Okänt fel: ${response.statusCode}, ${response.body}');
+      }
+    } catch (e) {
+      print('$e');
     }
   }
 
   Future<List<Person>> getAll() async {
     final response = await http.get(Uri.parse(baseUrl));
 
-    print('DEBUG: Response status code: ${response.statusCode}');
-  print('DEBUG: Response body: ${response.body}');
-
     if (response.statusCode == 200) {
       List<dynamic> data = jsonDecode(response.body);
 
-      print('DEBUG: Parsed data: $data'); // Se vad som faktiskt parsas
-      
       return data.map((e) => Person.fromJson(e)).toList();
     } else {
       throw Exception('Misslyckades att hämta personer');
@@ -35,10 +49,15 @@ class PersonRepository {
 
   Future<Person?> getPersonById(String personalNumber) async {
     final response = await http.get(Uri.parse('$baseUrl/$personalNumber'));
+
     if (response.statusCode == 200) {
       return Person.fromJson(jsonDecode(response.body));
+    } else if (response.statusCode == 404) {
+      return null;
+    } else {
+      throw Exception(
+          'Kunde inte hämta person. Felkod: ${response.statusCode}, Svar: ${response.body}');
     }
-    return null;
   }
 
   Future<void> update(Person person) async {
@@ -54,96 +73,292 @@ class PersonRepository {
 
   Future<void> delete(String personalNumber) async {
     final response = await http.delete(Uri.parse('$baseUrl/$personalNumber'));
-    if (response.statusCode != 200) {
-      throw Exception('Misslyckades att radera person');
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      final name = data['name'];
+      print('✅ $name med personnummer $personalNumber har raderats.');
+    } else if (response.statusCode == 404) {
+      throw Exception(
+          '❌ Personen med personnummer $personalNumber hittades inte.');
+    } else if (response.statusCode == 400) {
+      throw Exception('❌ Ogiltigt personnummer: $personalNumber.');
+    } else {
+      throw Exception(
+          '❌ Misslyckades att radera person. Felkod: ${response.statusCode}');
     }
   }
 }
 
 class VehicleRepository {
-  final List<Vehicle> _vehicles = [];
+  final String baseUrl = 'http://localhost:3000/api/vehicles';
 
-  void add(Vehicle vehicle) => _vehicles.add(vehicle);
+  Future<void> add(Vehicle vehicle) async {
+    final Uri url = Uri.parse(baseUrl);
+    final String body = jsonEncode(vehicle.toJson());
 
-  Future<List<Vehicle>> getAll() async {
-    await Future.delayed(Duration(seconds: 1));
-    return _vehicles;
-  }
-
-  Vehicle? getVehicleById(String registrationNumber) {
     try {
-      return _vehicles
-          .firstWhere((v) => v.registrationNumber == registrationNumber);
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: body,
+      );
+
+      if (response.statusCode == 201) {
+        print(
+            '✅ Fordon av typen ${vehicle.vehicleType} med registreringsnummer ${vehicle.registrationNumber} har lagts till.');
+      } else if (response.statusCode == 409) {
+        throw Exception(
+            '❌ Fordon med registreringsnummer ${vehicle.registrationNumber} finns redan i systemet.');
+      } else if (response.statusCode == 400) {
+        throw Exception(
+            '❌ Ogiltiga data skickades. Kontrollera att alla fält är korrekt ifyllda.');
+      } else if (response.statusCode == 500) {
+        throw Exception('❌ Serverfel, försök igen senare.');
+      } else {
+        throw Exception(
+            '❌ Okänt fel: ${response.statusCode}, ${response.body}');
+      }
     } catch (e) {
-      return null;
+      print('$e');
     }
   }
 
-  void update(Vehicle updatedVehicle) {
-    int index = _vehicles.indexWhere(
-        (v) => v.registrationNumber == updatedVehicle.registrationNumber);
-    if (index != -1) _vehicles[index] = updatedVehicle;
+  Future<List<Vehicle>> getAll() async {
+    final response = await http.get(Uri.parse(baseUrl));
+    if (response.statusCode == 200) {
+      List<dynamic> data = jsonDecode(response.body);
+
+      return data.map((v) => Vehicle.fromJson(v)).toList();
+    } else {
+      throw Exception('Misslyckades att hämta fordon');
+    }
   }
 
-  void delete(String registrationNumber) =>
-      _vehicles.removeWhere((v) => v.registrationNumber == registrationNumber);
+  Future<Vehicle?> getVehicleByRegistrationN(String registrationNumber) async {
+    final response = await http.get(Uri.parse('$baseUrl/$registrationNumber'));
+
+    if (response.statusCode == 200) {
+      return Vehicle.fromJson(jsonDecode(response.body));
+    } else if (response.statusCode == 404) {
+      return null;
+    } else {
+      throw Exception(
+          'Kunde inte hämta fordon. Felkod: ${response.statusCode}, Svar: ${response.body}');
+    }
+  }
+
+  Future<void> update(Vehicle updatedVehicle) async {
+    final Uri url = Uri.parse('$baseUrl/${updatedVehicle.registrationNumber}');
+    final response = await http.put(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(updatedVehicle.toJson()),
+    );
+
+    if (response.statusCode == 200) {
+      print(
+          '✅ Fordonet med registreringsnummer ${updatedVehicle.registrationNumber} har uppdaterats.');
+    } else if (response.statusCode == 404) {
+      print(
+          '❌ Fordonet med registreringsnummer ${updatedVehicle.registrationNumber} hittades inte.');
+    } else {
+      print(
+          '❌ Misslyckades att uppdatera fordon. Felkod: ${response.statusCode}');
+    }
+  }
+
+  Future<void> delete(String registrationNumber) async {
+    final response =
+        await http.delete(Uri.parse('$baseUrl/$registrationNumber'));
+    
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      final vType = data['vehicleType'];
+      print('✅ $vType med personnummer $registrationNumber har raderats.');
+    } else if (response.statusCode == 404) {
+      throw Exception(
+          '❌ Fordon med regnr $registrationNumber hittades inte.');
+    } else if (response.statusCode == 400) {
+      throw Exception('❌ Ogiltigt regnr: $registrationNumber.');
+    } else {
+      throw Exception(
+          '❌ Misslyckades att radera fordon. Felkod: ${response.statusCode}');
+    }
+  }
 }
 
 class ParkingSpaceRepository {
-  final List<ParkingSpace> _spaces = [];
+  final String baseUrl = 'http://localhost:3000/api/parking_spaces';
 
-  void add(ParkingSpace space) => _spaces.add(space);
-  List<ParkingSpace> getAll() => _spaces;
-  ParkingSpace? getSpaceById(String id) {
+  /// 🔹 Lägg till en ny parkeringsplats
+  Future<void> add(ParkingSpace space) async {
+    final Uri url = Uri.parse(baseUrl);
+    final String body = jsonEncode(space.toJson());
+
     try {
-      return _spaces.firstWhere((s) => s.id == id);
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: body,
+      );
+
+      if (response.statusCode == 201) {
+        print('✅ Parkeringsplats på ${space.address} har lagts till.');
+      } else if (response.statusCode == 409) {
+        throw Exception('❌ Parkeringsplats med ID ${space.id} finns redan.');
+      } else {
+        throw Exception('❌ Okänt fel: ${response.statusCode}, ${response.body}');
+      }
     } catch (e) {
-      return null;
+      print('🚨 Fel vid tillägg av parkeringsplats: $e');
     }
   }
 
-  void update(ParkingSpace updatedSpace) {
-    int index = _spaces.indexWhere((s) => s.id == updatedSpace.id);
-    if (index != -1) _spaces[index] = updatedSpace;
+  /// 🔹 Hämta alla parkeringsplatser
+  Future<List<ParkingSpace>> getAll() async {
+    final response = await http.get(Uri.parse(baseUrl));
+
+    if (response.statusCode == 200) {
+      List<dynamic> data = jsonDecode(response.body);
+      return data.map((s) => ParkingSpace.fromJson(s)).toList();
+    } else {
+      throw Exception('❌ Misslyckades att hämta parkeringsplatser.');
+    }
   }
 
-  void delete(String id) => _spaces.removeWhere((s) => s.id == id);
+  /// 🔹 Hämta en specifik parkeringsplats via ID
+  Future<ParkingSpace?> getSpaceById(String id) async {
+    final response = await http.get(Uri.parse('$baseUrl/$id'));
+
+    if (response.statusCode == 200) {
+      return ParkingSpace.fromJson(jsonDecode(response.body));
+    } else if (response.statusCode == 404) {
+      return null;
+    } else {
+      throw Exception('❌ Misslyckades att hämta parkeringsplats. Felkod: ${response.statusCode}');
+    }
+  }
+
+  /// 🔹 Uppdatera en parkeringsplats
+  Future<void> update(ParkingSpace updatedSpace) async {
+    final Uri url = Uri.parse('$baseUrl/${updatedSpace.id}');
+    final response = await http.put(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(updatedSpace.toJson()),
+    );
+
+    if (response.statusCode == 200) {
+      print('✅ Parkeringsplats ${updatedSpace.id} uppdaterad.');
+    } else if (response.statusCode == 404) {
+      print('❌ Parkeringsplatsen hittades inte.');
+    } else {
+      print('❌ Misslyckades att uppdatera parkeringsplats. Felkod: ${response.statusCode}');
+    }
+  }
+
+  /// 🔹 Ta bort en parkeringsplats via ID
+  Future<void> delete(String id) async {
+    final response = await http.delete(Uri.parse('$baseUrl/$id'));
+
+    if (response.statusCode == 200) {
+      print('✅ Parkeringsplats med ID $id har raderats.');
+    } else if (response.statusCode == 404) {
+      throw Exception('❌ Parkeringsplatsen hittades inte.');
+    } else {
+      throw Exception('❌ Misslyckades att radera parkeringsplats. Felkod: ${response.statusCode}');
+    }
+  }
 }
 
 class ParkingSessionRepository {
-  final List<ParkingSession> _parkings = [];
+  final String baseUrl = 'http://localhost:3000/api/parking_sessions';
 
-  void add(ParkingSession parking) => _parkings.add(parking);
-  List<ParkingSession> getAll() => _parkings;
-  ParkingSession? getActiveParkingByRegistration(String registrationNumber) {
+  // 🔹 Lägg till en parkering
+  Future<void> add(ParkingSession parking) async {
+    final Uri url = Uri.parse(baseUrl);
+    final String body = jsonEncode(parking.toJson());
+
     try {
-      return _parkings.firstWhere((p) =>
-          p.vehicle.registrationNumber == registrationNumber &&
-          p.endTime == null);
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: body,
+      );
+
+      if (response.statusCode == 201) {
+        print('✅ Parkering startad för ${parking.vehicle.registrationNumber}.');
+      } else {
+        throw Exception(
+            '❌ Misslyckades att starta parkering. Felkod: ${response.statusCode}, ${response.body}');
+      }
     } catch (e) {
-      return null;
+      print('❌ Ett fel uppstod: $e');
     }
   }
 
-  bool update(String registrationNumber,
-      {DateTime? newEndTime, bool endParking = false}) {
-    var parking = getActiveParkingByRegistration(registrationNumber);
+  // 🔹 Hämta alla parkeringar
+  Future<List<ParkingSession>> getAll() async {
+    final response = await http.get(Uri.parse(baseUrl));
 
-    if (parking == null) return false;
+    if (response.statusCode == 200) {
+      List<dynamic> data = jsonDecode(response.body);
+      return data.map((p) => ParkingSession.fromJson(p)).toList();
+    } else {
+      throw Exception('❌ Misslyckades att hämta parkeringar.');
+    }
+  }
+
+  // 🔹 Hämta en aktiv parkering för ett specifikt registreringsnummer
+  Future<ParkingSession?> getParkingByRegistrationN(String registrationNumber) async {
+    final response = await http.get(Uri.parse('$baseUrl/$registrationNumber'));
+
+    if (response.statusCode == 200) {
+      return ParkingSession.fromJson(jsonDecode(response.body));
+    } else if (response.statusCode == 404) {
+      return null;
+    } else {
+      throw Exception(
+          '❌ Misslyckades att hämta parkering. Felkod: ${response.statusCode}, Svar: ${response.body}');
+    }
+  }
+
+  // 🔹 Uppdatera en parkering (avsluta eller förläng)
+  Future<void> update(String registrationNumber,
+      {DateTime? newEndTime, bool endParking = false}) async {
+    final Uri url = Uri.parse('$baseUrl/$registrationNumber');
+    final Map<String, dynamic> updateData = {};
 
     if (endParking) {
-      parking.endTime = DateTime.now();
+      updateData['endTime'] = DateTime.now().toIso8601String();
     } else if (newEndTime != null) {
-      parking.endTime = newEndTime;
+      updateData['endTime'] = newEndTime.toIso8601String();
     }
 
-    return true;
+    final response = await http.put(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(updateData),
+    );
+
+    if (response.statusCode == 200) {
+      print('✅ Parkering uppdaterad.');
+    } else {
+      throw Exception('❌ Misslyckades att uppdatera parkering.');
+    }
   }
 
-  bool delete(String registrationNumber) {
-    int initialCount = _parkings.length;
-    _parkings
-        .removeWhere((p) => p.vehicle.registrationNumber == registrationNumber);
-    return _parkings.length < initialCount;
+  // 🔹 Ta bort en parkering
+  Future<void> delete(String registrationNumber) async {
+    final response = await http.delete(Uri.parse('$baseUrl/$registrationNumber'));
+
+    if (response.statusCode == 200) {
+      print('✅ Parkering för $registrationNumber har raderats.');
+    } else if (response.statusCode == 404) {
+      throw Exception('❌ Ingen parkering hittades för $registrationNumber.');
+    } else {
+      throw Exception('❌ Misslyckades att radera parkering.');
+    }
   }
 }
