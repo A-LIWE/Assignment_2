@@ -9,13 +9,13 @@ class Person {
 
   Map<String, dynamic> toJson() => {
         'name': name,
-        'personalNumber': personalNumber,
+        'personal_number': personalNumber,
       };
 
       factory Person.fromJson(Map<String, dynamic> json) {
     return Person(
       json['name'],
-      json['personalNumber'],
+      json['personal_number'],
     );
   }
 
@@ -45,15 +45,15 @@ class Vehicle {
   Vehicle(this.registrationNumber, this.vehicleType, this.owner) : uuid = Uuid().v4();
 
   Map<String, dynamic> toJson() => {
-        'registrationNumber': registrationNumber,
-        'vehicleType': vehicleType,
-        'owner': owner.toJson(),
+        'registration_number': registrationNumber,
+        'vehicle_type': vehicleType,
+        'owner': owner,
       };
 
       factory Vehicle.fromJson(Map<String, dynamic> json) {
     return Vehicle(
-      json['registrationNumber'],
-      json['vehicleType'],
+      json['registration_number'],
+      json['vehicle_type'],
       Person.fromJson(json['owner']),
     );
   }
