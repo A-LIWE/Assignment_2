@@ -60,17 +60,15 @@ Future<void> handlePersons(PersonRepository personRepo) async {
 
         if (person.isValid()) {
           await personRepo.add(person);
-          print('Person tillagd.');
         } else {
           print('❌: Namn eller personnummer är felaktigt.');
         }
         break;
 
       case '2':
-        print('Laddar personer...');
         var people = await personRepo.getAll();
         if (people.isEmpty) {
-          print('❌ Ingen person hittades.');
+          print('❌ Listan är tom.');
         } else {
           print('Alla personer:');
           for (var person in people) {
@@ -97,8 +95,11 @@ Future<void> handlePersons(PersonRepository personRepo) async {
       case '4':
         print('Ange personnummer för personen som ska tas bort:');
         var personalNumber = stdin.readLineSync()!;
-        await personRepo.delete(personalNumber);
-        print('Person borttagen.');
+        try {
+          await personRepo.delete(personalNumber);
+        } catch (e) {
+          print(e);
+        }
         break;
 
       case '5':
@@ -128,8 +129,8 @@ Future<void> handleVehicles(
         var type = stdin.readLineSync()!.toUpperCase();
         print('Ange ägarens personnummer:');
         var ownerId = stdin.readLineSync()!;
-        var owner = await personRepo.getPersonById(ownerId);
 
+        var owner = await personRepo.getPersonById(ownerId);
         if (owner == null) {
           print('❌ Fel: Ägare hittades inte.');
           break;
@@ -137,8 +138,7 @@ Future<void> handleVehicles(
 
         var vehicle = Vehicle(regNum, type, owner);
         if (vehicle.isValid()) {
-          vehicleRepo.add(vehicle);
-          print('Fordon tillagt.');
+          await vehicleRepo.add(vehicle); 
         } else {
           print(
               '❌: Ogiltiga uppgifter, kontrollera registreringsnummer och fordonstyp.');
@@ -162,7 +162,8 @@ Future<void> handleVehicles(
       case '3':
         print('Ange registreringsnummer för fordonet som ska uppdateras:');
         var regNum = stdin.readLineSync()!.toUpperCase();
-        var vehicle = vehicleRepo.getVehicleById(regNum);
+        var vehicle = await vehicleRepo.getVehicleByRegistrationN(regNum);
+
         if (vehicle != null) {
           print('Ange ny fordonstyp:');
           var newType = stdin.readLineSync()!.toUpperCase();
@@ -210,40 +211,62 @@ Future<void> handleParkingSpaces(
         var parkingSpace = ParkingSpace(id, address, pricePerHour);
 
         if (parkingSpace.isValid()) {
-          parkingSpaceRepo.add(ParkingSpace(id, address, pricePerHour));
-          print('Parkeringsplats tillagd.');
+          try {
+            await parkingSpaceRepo.add(parkingSpace);
+            print('✅ Parkeringsplats tillagd.');
+          } catch (e) {
+            print('❌ Fel vid tillägg av parkeringsplats: $e');
+          }
         } else {
-          print(
-              '❌: Ogiltiga uppgifter, kontrollera parkerings-id, adress och pris');
+          print('❌: Ogiltiga uppgifter, kontrollera parkerings-ID, adress och pris.');
         }
         break;
 
       case '2':
         print('Alla parkeringsplatser:');
-        parkingSpaceRepo.getAll().forEach((s) => print(s));
+        try {
+          var spaces = await parkingSpaceRepo.getAll();
+          if (spaces.isEmpty) {
+            print('❌ Inga parkeringsplatser hittades.');
+          } else {
+            for (var space in spaces) {
+              print(space);
+            }
+          }
+        } catch (e) {
+          print('❌ Misslyckades att hämta parkeringsplatser: $e');
+        }
         break;
 
       case '3':
         print('Ange ID för parkeringsplatsen som ska uppdateras:');
         var id = stdin.readLineSync()!.toUpperCase();
-        var space = parkingSpaceRepo.getSpaceById(id);
-        if (space != null) {
-          print('Ange ny adress:');
-          var newAddress = stdin.readLineSync()!;
-          print('Ange nytt pris per timme:');
-          var newPrice = double.parse(stdin.readLineSync()!);
-          parkingSpaceRepo.update(ParkingSpace(id, newAddress, newPrice));
-          print('Parkeringsplats uppdaterad.');
-        } else {
-          print('Parkeringsplats hittades inte.');
+        try {
+          var space = await parkingSpaceRepo.getSpaceById(id);
+          if (space != null) {
+            print('Ange ny adress:');
+            var newAddress = stdin.readLineSync()!;
+            print('Ange nytt pris per timme:');
+            var newPrice = double.parse(stdin.readLineSync()!);
+            await parkingSpaceRepo.update(ParkingSpace(id, newAddress, newPrice));
+            print('✅ Parkeringsplats uppdaterad.');
+          } else {
+            print('❌ Parkeringsplats hittades inte.');
+          }
+        } catch (e) {
+          print('❌ Fel vid uppdatering av parkeringsplats: $e');
         }
         break;
 
       case '4':
         print('Ange ID för parkeringsplatsen som ska tas bort:');
         var id = stdin.readLineSync()!.toUpperCase();
-        parkingSpaceRepo.delete(id);
-        print('Parkeringsplats borttagen.');
+         try {
+          await parkingSpaceRepo.delete(id);
+          print('✅ Parkeringsplats borttagen.');
+        } catch (e) {
+          print('❌ Fel vid radering av parkeringsplats: $e');
+        }
         break;
 
       case '5':
@@ -271,63 +294,78 @@ Future<void> handleParkingSessions(
       case '1':
         print('Ange registreringsnummer för fordonet:');
         var regNum = stdin.readLineSync()!.toUpperCase();
-        var vehicle = vehicleRepo.getVehicleById(regNum);
+        var vehicle = await vehicleRepo.getVehicleByRegistrationN(regNum);
         if (vehicle == null) {
-          print('Fordon hittades inte.');
+          print('❌ Fordon hittades inte.');
           break;
         }
+
         print('Ange ID för parkeringsplatsen:');
         var spaceId = stdin.readLineSync()!.toUpperCase();
-        var space = parkingSpaceRepo.getSpaceById(spaceId);
+        var space = await parkingSpaceRepo.getSpaceById(spaceId);
         if (space == null) {
-          print('Parkeringsplats hittades inte.');
+          print('❌ Parkeringsplats hittades inte.');
           break;
         }
+
         var session = ParkingSession(vehicle, space, DateTime.now());
+
         if (session.isValid()) {
-          parkingSessionRepo
-              .add(ParkingSession(vehicle, space, DateTime.now()));
-          print('Parkering startad.');
+          await parkingSessionRepo.add(session);
+          print('✅ Parkering startad.');
         } else {
           print('❌: Ogiltiga parkeringsuppgifter.');
         }
         break;
 
       case '2':
-        print('Alla parkeringar:');
-        parkingSessionRepo.getAll().forEach((p) => print(p));
+        var parkings = await parkingSessionRepo.getAll();
+        if (parkings.isEmpty) {
+          print('❌ Inga parkeringar hittades.');
+        } else {
+          print('Alla parkeringar:');
+          for (var parking in parkings) {
+            print(parking);
+          }
+        }
         break;
 
-      case '3':
+       case '3':
         print('Ange registreringsnummer för fordonet som ska uppdateras:');
         var regNum = stdin.readLineSync()!.toUpperCase();
+        var parking = await parkingSessionRepo.getParkingByRegistrationN(regNum);
+
+        if (parking == null) {
+          print('❌ Ingen aktiv parkering hittades.');
+          break;
+        }
+
         print('Vill du avsluta parkeringen? (j/n)');
         var endParking = stdin.readLineSync()!.toLowerCase() == 'j';
+
         if (endParking) {
-          if (parkingSessionRepo.update(regNum, endParking: true)) {
-            print('Parkeringen avslutad.');
-          } else {
-            print('Ingen aktiv parkering hittades.');
-          }
+          await parkingSessionRepo.update(regNum, endParking: true);
+          print('✅ Parkeringen avslutad.');
         } else {
           print('Ange ny sluttid (yyyy-MM-dd HH:mm):');
-          var endTime = DateTime.parse(stdin.readLineSync()!);
-          if (parkingSessionRepo.update(regNum, newEndTime: endTime)) {
-            print('Parkeringen förlängd.');
-          } else {
-            print('Ingen aktiv parkering hittades.');
+          try {
+            var endTime = DateTime.parse(stdin.readLineSync()!);
+            await parkingSessionRepo.update(regNum, newEndTime: endTime);
+            print('✅ Parkeringen förlängd.');
+          } catch (e) {
+            print('❌ Ogiltigt format. Ange datum i formatet yyyy-MM-dd HH:mm.');
           }
         }
         break;
 
       case '4':
-        print(
-            'Ange registreringsnummer för fordonet vars parkering ska tas bort:');
+        print('Ange registreringsnummer för fordonet vars parkering ska tas bort:');
         var regNum = stdin.readLineSync()!.toUpperCase();
-        if (parkingSessionRepo.delete(regNum)) {
-          print('Parkering borttagen.');
-        } else {
-          print('Ingen parkering hittades.');
+        try {
+          await parkingSessionRepo.delete(regNum);
+          print('✅ Parkering borttagen.');
+        } catch (e) {
+          print('❌ Ingen parkering hittades.');
         }
         break;
 
