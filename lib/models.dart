@@ -12,7 +12,7 @@ class Person {
         'personal_number': personalNumber,
       };
 
-      factory Person.fromJson(Map<String, dynamic> json) {
+  factory Person.fromJson(Map<String, dynamic> json) {
     return Person(
       json['name'],
       json['personal_number'],
@@ -40,29 +40,47 @@ class Vehicle {
   String uuid;
   String registrationNumber;
   String vehicleType;
-  Person owner;
+  Person? owner; // 🔥 Kan nu vara null
 
-  Vehicle(this.registrationNumber, this.vehicleType, this.owner) : uuid = Uuid().v4();
+  Vehicle(this.registrationNumber, this.vehicleType, this.owner)
+      : uuid = Uuid().v4();
 
   Map<String, dynamic> toJson() => {
         'registration_number': registrationNumber,
         'vehicle_type': vehicleType,
-        'owner': owner,
+        // 🔥 Lägg till ägaren om den inte är null
+        if (owner != null) 'owner': owner!.toJson(),
       };
 
-      factory Vehicle.fromJson(Map<String, dynamic> json) {
+  factory Vehicle.fromJson(Map<String, dynamic> json) {
+    // 🔍 Hämta ev. ägarobjekt ur JSON
+    final ownerJson = json['owner'];
+    Person? person;
+    
+    // Om `owner` är en Map -> parse:ar vi den med Person.fromJson(...)
+    // Om inte -> owner blir null
+    if (ownerJson is Map<String, dynamic>) {
+      person = Person.fromJson(ownerJson);
+    } else {
+      person = null;
+    }
+
     return Vehicle(
       json['registration_number'],
       json['vehicle_type'],
-      Person.fromJson(json['owner']),
-    );
-  }
+      person,
+    ); 
   
+}
+
   @override
-  String toString() => '\nRegnr: $registrationNumber \nFordonstyp: $vehicleType \nÄgare: $owner';
+  String toString() =>
+      '\nRegnr: $registrationNumber \nFordonstyp: $vehicleType \nÄgare: $owner';
 
   bool isValid() {
-    return _isValidRegistrationNumber() && _isValidVehicleType() && owner.isValid();
+    return _isValidRegistrationNumber() &&
+        _isValidVehicleType() &&
+        owner!.isValid();
   }
 
   bool _isValidRegistrationNumber() {
@@ -75,7 +93,7 @@ class Vehicle {
   }
 }
 
-class ParkingSpace{
+class ParkingSpace {
   String uuid;
   String id;
   String address;
@@ -89,16 +107,17 @@ class ParkingSpace{
         'pph': pph,
       };
 
-      factory ParkingSpace.fromJson(Map<String, dynamic> json) {
+  factory ParkingSpace.fromJson(Map<String, dynamic> json) {
     return ParkingSpace(
       json['id'],
       json['address'],
-      json['pph'],
+      (json['pph'] as num).toDouble(),
     );
   }
 
-   @override
-  String toString() => '\nParkeringens id: $id, \nAdress: $address, \nPris: $pph kr per timme';
+  @override
+  String toString() =>
+      '\nParkeringens id: $id, \nAdress: $address, \nPris: $pph kr per timme';
 
   bool isValid() {
     return _isValidId() && _isValidAddress() && _isValidPrice();
@@ -118,14 +137,16 @@ class ParkingSpace{
   }
 }
 
-class ParkingSession{
+class ParkingSession {
   String uuid;
   Vehicle vehicle;
   ParkingSpace parkingSpace;
   DateTime startTime;
   DateTime? endTime;
 
-  ParkingSession(this.vehicle, this.parkingSpace, this.startTime, [this.endTime]) : uuid = Uuid().v4();
+  ParkingSession(this.vehicle, this.parkingSpace, this.startTime,
+      [this.endTime])
+      : uuid = Uuid().v4();
 
   Map<String, dynamic> toJson() => {
         'vehicle': vehicle.toJson(),
@@ -134,7 +155,7 @@ class ParkingSession{
         'endTime': endTime?.toIso8601String(),
       };
 
-      factory ParkingSession.fromJson(Map<String, dynamic> json) {
+  factory ParkingSession.fromJson(Map<String, dynamic> json) {
     return ParkingSession(
       Vehicle.fromJson(json['vehicle']),
       ParkingSpace.fromJson(json['parkingSpace']),
@@ -144,15 +165,15 @@ class ParkingSession{
   }
 
   @override
-  String toString(){
+  String toString() {
     return '\nRegnr: ${vehicle.registrationNumber}, \nParkeringens id: ${parkingSpace.id} \nParkeringen startad: $startTime \nParkeringen avslutad: ${endTime ?? "ongoing"}';
   }
 
   bool isValid() {
     return vehicle.isValid() &&
-           parkingSpace.isValid() &&
-           _isValidStartTime() &&
-           _isValidEndTime();
+        parkingSpace.isValid() &&
+        _isValidStartTime() &&
+        _isValidEndTime();
   }
 
   bool _isValidStartTime() {

@@ -125,15 +125,21 @@ class VehicleRepository {
   }
 
   Future<List<Vehicle>> getAll() async {
+  try {
     final response = await http.get(Uri.parse(baseUrl));
-    if (response.statusCode == 200) {
-      List<dynamic> data = jsonDecode(response.body);
 
+    if (response.statusCode == 200) {
+      // Säkerställ att vi får en lista från jsonDecode
+      final List<dynamic> data = jsonDecode(response.body) as List;
       return data.map((v) => Vehicle.fromJson(v)).toList();
     } else {
-      throw Exception('Misslyckades att hämta fordon');
+      throw Exception('Misslyckades att hämta fordon. Statuskod: ${response.statusCode}');
     }
+  } catch (e) {
+    // Eventuella nätverksfel eller json-konverteringsfel fångas här
+    throw Exception('Ett fel inträffade vid hämtning av fordon: $e');
   }
+}
 
   Future<Vehicle?> getVehicleByRegistrationN(String registrationNumber) async {
     final response = await http.get(Uri.parse('$baseUrl/$registrationNumber'));
@@ -195,7 +201,7 @@ class ParkingSpaceRepository {
   Future<void> add(ParkingSpace space) async {
     final Uri url = Uri.parse(baseUrl);
     final String body = jsonEncode(space.toJson());
-
+    
     try {
       final response = await http.post(
         url,
