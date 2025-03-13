@@ -502,22 +502,46 @@ app.delete('/api/vehicles/<registration_number>', (Request request, String regNu
 
   // 🟢 1. Hämta alla parkeringar
   app.get('/api/parking_sessions', (Request request) async {
-    final response = await supabase.from('parking_sessions').select();
-    return Response.ok(jsonEncode(response),
-        headers: {'Content-Type': 'application/json'});
-  });
+  try {
+    // 🔹 Vi gör en nested select på fordon & parkeringsplats
+    //    Supabase genererar automagiskt "owner: persons(...)"-liknande struktur.
+    final response = await supabase
+        .from('parking_sessions')
+        .select('uuid, start_time, end_time, vehicle: vehicles(*), parking_space: parking_spaces(*)');
+
+    // Nu får vi en lista av sessions, där 
+    // "vehicle" är inbäddat från "vehicles"-tabellen 
+    // och "parking_space" från "parking_spaces"
+
+    return Response.ok(
+      jsonEncode(response),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+  } catch (e, stacktrace) {
+    print('🚨 SERVER ERROR: $e');
+    print('🚨 STACKTRACE: $stacktrace');
+
+    return Response.internalServerError(
+      body: jsonEncode({'error': 'Misslyckades att hämta parkeringar.'}),
+      headers: {'Content-Type': 'application/json'},
+    );
+  }
+});
+
 
   // 🟢 2. Starta en ny parkering
   app.post('/api/parking_sessions', (Request request) async {
     try {
       final payload = await request.readAsString();
       final data = jsonDecode(payload);
+      print('🔍 Data innan insert: $data');
 
       final response = await supabase.from('parking_sessions').insert({
         'vehicle': data[
-            'vehicle'], // 🔗 Antag att detta är en relation till "vehicles"
+            'vehicle']['registration_number'], // 🔗 Antag att detta är en relation till "vehicles"
         'parking_space': data[
-            'parking_space'], // 🔗 Antag att detta är en relation till "parking_spaces"
+            'parking_space']['id'], // 🔗 Antag att detta är en relation till "parking_spaces"
         'start_time': data['start_time'],
       }).select();
 
@@ -537,64 +561,44 @@ app.delete('/api/vehicles/<registration_number>', (Request request, String regNu
   });
 
   // 🟢 Hämta en specifik parkering via registreringsnummer
-  app.get('/api/parking_sessions/<registration_number>',
-      (Request request, String registrationNumber) async {
-    try {
-      // 🔹 1. Hämta fordonets UUID från 'vehicles'-tabellen
-      final vehicleResponse = await supabase
-          .from('vehicles')
-          .select('uuid') // Endast hämta UUID
-          .eq('registration_number', registrationNumber)
-          .maybeSingle(); // 🔍 Förväntar sig ett enda fordon
+  app.get('/api/parking_sessions/<registration_number>', (Request request, String regNumber) async {
+  try {
+    // 🔹 Hämtar en parkering där 'vehicle' matchar registreringsnumret
+    final response = await supabase
+        .from('parking_sessions')
+        .select()
+        .eq('vehicle', regNumber)
+        .maybeSingle(); // 🔍 Returnerar en rad eller null
+        print(response);
 
-      // 🚨 Om fordonet inte hittas, returnera 404
-      if (vehicleResponse == null) {
-        return Response(
-          404,
-          body: jsonEncode({
-            'error':
-                'Fordonet med registreringsnummer $registrationNumber hittades inte.'
-          }),
-          headers: {'Content-Type': 'application/json'},
-        );
-      }
-
-      final vehicleUuid = vehicleResponse['uuid']; // 🎯 Fordonets UUID
-
-      // 🔹 2. Hämta parkeringen med fordonets UUID
-      final response = await supabase
-          .from('parking_sessions')
-          .select()
-          .eq('vehicle', vehicleUuid) // 🔗 Jämför mot fordonets UUID
-          .maybeSingle(); // 🔍 Hämtar en parkering om den finns
-
-      // 🚨 Om parkeringen inte hittas, returnera 404
-      if (response == null) {
-        return Response(
-          404,
-          body: jsonEncode({
-            'error':
-                'Ingen aktiv parkering hittades för fordonet med registreringsnummer $registrationNumber.'
-          }),
-          headers: {'Content-Type': 'application/json'},
-        );
-      }
-
-      // 🟢 Returnera parkeringen om den hittades
-      return Response.ok(
-        jsonEncode({'message': 'Parkering hittad', 'data': response}),
-        headers: {'Content-Type': 'application/json'},
-      );
-    } catch (e, stacktrace) {
-      print('🚨 SERVER ERROR: $e');
-      print('🚨 STACKTRACE: $stacktrace');
-
-      return Response.internalServerError(
-        body: jsonEncode({'error': 'Serverfel, vänligen försök igen.'}),
+    // 🚨 Om ingen rad hittades → return 404
+    if (response == null) {
+      return Response.notFound(
+        jsonEncode({
+          'error':
+              'Ingen aktiv parkering hittades för fordonet med registreringsnummer $regNumber.'
+        }),
         headers: {'Content-Type': 'application/json'},
       );
     }
-  });
+
+    // 🟢 Annars → 200 OK med parkeringen i JSON
+    return Response.ok(
+      jsonEncode({'message': 'Parkering hittad', 'data': response}),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+  } catch (e, stacktrace) {
+    print('🚨 SERVER ERROR: $e');
+    print('🚨 STACKTRACE: $stacktrace');
+
+    return Response.internalServerError(
+      body: jsonEncode({'error': 'Serverfel, vänligen försök igen.'}),
+      headers: {'Content-Type': 'application/json'},
+    );
+  }
+});
+
 
   // 🟢 4. Uppdatera en parkering (t.ex. avsluta parkeringen)
   app.put('/api/parking_sessions/<registration_number>',

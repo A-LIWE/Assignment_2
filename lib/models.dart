@@ -56,7 +56,7 @@ class Vehicle {
     // 🔍 Hämta ev. ägarobjekt ur JSON
     final ownerJson = json['owner'];
     Person? person;
-    
+
     // Om `owner` är en Map -> parse:ar vi den med Person.fromJson(...)
     // Om inte -> owner blir null
     if (ownerJson is Map<String, dynamic>) {
@@ -69,9 +69,8 @@ class Vehicle {
       json['registration_number'],
       json['vehicle_type'],
       person,
-    ); 
-  
-}
+    );
+  }
 
   @override
   String toString() =>
@@ -80,7 +79,7 @@ class Vehicle {
   bool isValid() {
     return _isValidRegistrationNumber() &&
         _isValidVehicleType() &&
-        owner!.isValid();
+        (owner == null || owner!.isValid());
   }
 
   bool _isValidRegistrationNumber() {
@@ -150,23 +149,30 @@ class ParkingSession {
 
   Map<String, dynamic> toJson() => {
         'vehicle': vehicle.toJson(),
-        'parkingSpace': parkingSpace.toJson(),
-        'startTime': startTime.toIso8601String(),
-        'endTime': endTime?.toIso8601String(),
+        'parking_space': parkingSpace.toJson(),
+        'start_time': startTime.toIso8601String(),
+        'end_time': endTime?.toIso8601String(),
       };
 
   factory ParkingSession.fromJson(Map<String, dynamic> json) {
+    if (json['vehicle'] == null || json['parking_space'] == null) {
+      throw Exception('Missing vehicle or parking_space in JSON');
+    }
+
+    final vehicleMap = json['vehicle'] as Map<String, dynamic>;
+    final parkingSpaceMap = json['parking_space'] as Map<String, dynamic>;
+
     return ParkingSession(
-      Vehicle.fromJson(json['vehicle']),
-      ParkingSpace.fromJson(json['parkingSpace']),
-      DateTime.parse(json['startTime']),
-      json['endTime'] != null ? DateTime.parse(json['endTime']) : null,
+      Vehicle.fromJson(vehicleMap),
+      ParkingSpace.fromJson(parkingSpaceMap),
+      DateTime.parse(json['start_time']),
+      json['end_time'] != null ? DateTime.parse(json['end_time']) : null,
     );
   }
 
   @override
   String toString() {
-    return '\nRegnr: ${vehicle.registrationNumber}, \nParkeringens id: ${parkingSpace.id} \nParkeringen startad: $startTime \nParkeringen avslutad: ${endTime ?? "ongoing"}';
+    return '\nFordonstyp: ${vehicle.vehicleType} \nRegnr: ${vehicle.registrationNumber} \nParkeringens id: ${parkingSpace.id} \nParkeringen startad: $startTime \nParkeringen avslutad: ${endTime ?? "pågående"}';
   }
 
   bool isValid() {

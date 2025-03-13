@@ -304,7 +304,7 @@ Future<void> handleParkingSessions(
 
     switch (choice) {
       case '1':
-        print('Ange registreringsnummer för fordonet:');
+        print('\n Ange registreringsnummer för fordonet:');
         var regNum = stdin.readLineSync()!.toUpperCase();
         var vehicle = await vehicleRepo.getVehicleByRegistrationN(regNum);
         if (vehicle == null) {
@@ -324,7 +324,6 @@ Future<void> handleParkingSessions(
 
         if (session.isValid()) {
           await parkingSessionRepo.add(session);
-          print('✅ Parkering startad.');
         } else {
           print('❌: Ogiltiga parkeringsuppgifter.');
         }
@@ -343,7 +342,7 @@ Future<void> handleParkingSessions(
         break;
 
       case '3':
-        print('Ange registreringsnummer för fordonet som ska uppdateras:');
+        print('\nAnge registreringsnummer för fordonet som ska uppdateras:');
         var regNum = stdin.readLineSync()!.toUpperCase();
         var parking =
             await parkingSessionRepo.getParkingByRegistrationN(regNum);

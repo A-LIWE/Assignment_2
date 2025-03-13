@@ -294,7 +294,7 @@ class ParkingSessionRepository {
       );
 
       if (response.statusCode == 201) {
-        print('✅ Parkering startad för ${parking.vehicle.registrationNumber}.');
+        print('/n✅ Parkering startad för ${parking.vehicle.vehicleType} med registreringsnummer: ${parking.vehicle.registrationNumber}.');
       } else {
         throw Exception(
             '❌ Misslyckades att starta parkering. Felkod: ${response.statusCode}, ${response.body}');
@@ -319,9 +319,11 @@ class ParkingSessionRepository {
   // 🔹 Hämta en aktiv parkering för ett specifikt registreringsnummer
   Future<ParkingSession?> getParkingByRegistrationN(String registrationNumber) async {
     final response = await http.get(Uri.parse('$baseUrl/$registrationNumber'));
+    print(response.body);
 
     if (response.statusCode == 200) {
       return ParkingSession.fromJson(jsonDecode(response.body));
+      
     } else if (response.statusCode == 404) {
       return null;
     } else {
